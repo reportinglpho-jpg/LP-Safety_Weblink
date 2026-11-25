@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loss Prevention & Safety Web Link</title>
+    <link rel="icon" type="image/png" href="./http.png?v=1">
+    <link rel="shortcut icon" type="image/png" href="./http.png?v=1">
+    <link rel="apple-touch-icon" href="./http.png?v=1">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#c8102e', // Corporate Crimson Red
+                            800: '#9b111e', // Dark Crimson
+                            900: '#7f1d1d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Sarabun', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts (Sarabun & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Firebase SDK v10 (Compat for clean single-file integration) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-brand-700 selection:text-white">
+
+<div id="app" class="min-h-screen flex flex-col justify-between">
+    <!-- TOP NAVIGATION HEADER -->
+    <header class="bg-gradient-to-r from-brand-800 via-brand-700 to-red-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Brand Logo & Title -->
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-shield-halved text-2xl text-yellow-400"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold tracking-widest uppercase bg-red-950/60 text-red-200 px-2 py-0.5 rounded border border-red-500/30">Enterprise Portal</span>
+                            <span v-if="isFirebaseConfigured" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5 animate-pulse"></span> Firebase Auth & Live DB
+                            </span>
+                            <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-200 border border-amber-500/40">
+                                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full mr-1.5"></span> รอการตั้งค่า Firebase
+                            </span>
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                            Loss Prevention & Safety <span class="font-light text-red-200">Web Link</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Admin Action Button -->
+                <div class="flex items-center space-x-3">
+                    <template v-if="isLoggedIn">
+                        <div class="hidden md:flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
+                            <i class="fa-solid fa-user-shield text-yellow-400"></i>
+                            <span class="text-sm font-medium">{{ currentUser.name || currentUser.username }}</span>
+                            <span class="text-xs bg-red-600 px-2 py-0.5 rounded-full font-semibold">{{ currentUser.role }}</span>
+                        </div>
+                        <button @click="openAdminModal" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>ตั้งค่าระบบ</span>
+                        </button>
+                        <button @click="logout" title="ออกจากระบบ" class="bg-red-900/60 hover:bg-red-950 text-red-100 hover:text-white border border-red-500/30 px-3 py-2 rounded-lg text-sm transition-all duration-200">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button @click="openLoginModal" class="bg-white text-brand-700 hover:bg-red-50 px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2">
+                            <i class="fa-solid fa-lock"></i>
+                            <span>ตั้งค่าระบบ (Admin)</span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- EMERGENCY HOTLINE & ANNOUNCEMENT BAR -->
+    <div v-if="announcementText" class="bg-slate-900 text-slate-300 border-b border-slate-800 py-2.5 px-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-xs sm:text-sm gap-2">
+            <div class="flex items-center space-x-3">
+                <span class="bg-brand-700 text-white text-xs px-2.5 py-0.5 rounded font-bold uppercase tracking-wide flex items-center shrink-0">
+                    <i class="fa-solid fa-bell mr-1.5 animate-bounce"></i> ประกาศด่วน
+                </span>
+                <span class="truncate">{{ announcementText }}</span>
+            </div>
+            <div class="flex items-center space-x-4 text-xs text-slate-400 shrink-0">
+                <span><i class="fa-regular fa-clock mr-1 text-slate-500"></i> อัปเดตล่าสุด: {{ currentDate }}</span>
+                <span><i class="fa-solid fa-server mr-1 text-emerald-400"></i> ระบบงานออนไลน์ปกติ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN PORTAL CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        <!-- SEARCH & STATS HERO BOARD -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none text-brand-700">
+                <i class="fa-solid fa-shield-cat text-[240px]"></i>
+            </div>
+            
+            <div class="relative z-10 max-w-3xl">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+                    ศูนย์รวมลิงก์ระบบงานป้องกันการสูญเสียและความปลอดภัย
+                </h2>
+                <p class="text-slate-600 text-sm sm:text-base mb-6">
+                    เข้าถึงเครื่องมือและระบบงานบริหารจัดการความเสี่ยง งานตรวจสอบความปลอดภัย งานกล้องวงจรปิด และรายงานเหตุการณ์ได้อย่างสะดวกรวดเร็วในจุดเดียว
+                </p>
+
+                <!-- Search Input Bar -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 text-lg">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input 
+                        v-model="searchQuery" 
+                        type="text" 
+                        placeholder="ค้นหาชื่อระบบงาน, หมวดหมู่ หรือคำอธิบาย..." 
+                        class="w-full pl-12 pr-10 py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-700 focus:bg-white shadow-inner text-base transition-all"
+                    />
+                    <button v-if="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-circle-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CATEGORY FILTER BUTTONS -->
+            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold uppercase text-slate-400 mr-2 flex items-center">
+                    <i class="fa-solid fa-filter mr-1"></i> หมวดหมู่:
+                </span>
+                <button 
+                    @click="selectedCategory = 'All'" 
+                    :class="selectedCategory === 'All' ? 'bg-brand-700 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-1.5"
+                >
+                    <span>ทั้งหมด</span>
+                    <span :class="selectedCategory === 'All' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'" class="px-2 py-0.5 rounded-full text-xs">
+                        {{ links.length }}
+                    </span>
+                </button>
+                <button 
+                    v-for="cat in categories" 
+                    :key="cat.name"
+                    @click="selectedCategory = cat.name"
+                    :class="selectedCategory === cat.name ? 'bg-brand-700 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-1.5"
+                >
+                    <i :class="cat.icon || 'fa-solid fa-folder'"></i>
+                    <span>{{ cat.name }}</span>
+                    <span :class="selectedCategory === cat.name ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'" class="px-2 py-0.5 rounded-full text-xs">
+                        {{ links.filter(l => l.category === cat.name).length }}
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- PORTAL LINKS GRID DISPLAY -->
+        <div v-if="filteredLinks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div 
+                v-for="link in filteredLinks" 
+                :key="link.id"
+                class="group bg-white rounded-2xl border border-slate-200/90 hover:border-brand-500/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden relative"
+            >
+                <!-- Top Accent Line -->
+                <div class="h-1.5 w-full bg-gradient-to-r from-brand-700 to-red-500 group-hover:h-2 transition-all"></div>
+
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <!-- Icon Circle -->
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 text-brand-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:bg-brand-700 group-hover:text-white transition-all duration-300 shadow-sm border border-red-200/60">
+                            <i :class="link.icon || 'fa-solid fa-link'"></i>
+                        </div>
+                        
+                        <!-- Category Badge -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 group-hover:bg-red-50 group-hover:text-brand-700 group-hover:border-red-200 transition-colors">
+                            {{ link.category }}
+                        </span>
+                    </div>
+
+                    <!-- Title & Description -->
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-brand-700 transition-colors mb-2 line-clamp-1">
+                        {{ link.title }}
+                    </h3>
+                    <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 h-10">
+                        {{ link.description || 'ไม่มีคำอธิบายสำหรับระบบงานนี้' }}
+                    </p>
+                </div>
+
+                <!-- Card Footer & Launch Button -->
+                <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between group-hover:bg-red-50/40 transition-colors">
+                    <span class="text-xs font-mono text-slate-400 truncate max-w-[180px]">
+                        {{ formatUrlDisplay(link.url) }}
+                    </span>
+                    
+                    <a 
+                        :href="isSafeUrl(link.url) ? link.url : '#'" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center space-x-2 bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-all duration-200 group-hover:shadow-md transform group-hover:-translate-y-0.5"
+                    >
+                        <span>เปิดระบบ</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE WHEN NO RESULTS FOUND -->
+        <div v-else class="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center my-8">
+            <div class="w-16 h-16 bg-red-50 text-brand-700 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">
+                {{ !isFirebaseConfigured ? 'ยังไม่ได้ตั้งค่าการเชื่อมต่อ Firebase' : (links.length === 0 ? 'ยังไม่มีข้อมูลระบบงานในพอร์ทัล' : 'ไม่พบระบบงานที่ตรงกับการค้นหา') }}
+            </h3>
+            <p class="text-slate-500 text-sm max-w-md mx-auto mb-6">
+                {{ !isFirebaseConfigured ? 'กดปุ่ม "ตั้งค่าระบบ (Admin)" มุมขวาบนเพื่อวาง Firebase Config ขององค์กรและเข้าสู่ระบบ' : (links.length === 0 ? 'เข้าสู่ระบบตั้งค่า (Admin) เพื่อเพิ่มลิงก์ระบบงานและหมวดหมู่ของคุณ' : 'ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่นๆ') }}
+            </p>
+            <button v-if="searchQuery || selectedCategory !== 'All'" @click="searchQuery = ''; selectedCategory = 'All'" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                รีเซ็ตการค้นหา
+            </button>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-shield-halved text-brand-500 text-2xl"></i>
+                <div>
+                    <p class="text-white font-bold text-sm">Enterprise Loss Prevention & Safety Division</p>
+                    <p class="text-xs text-slate-500">© 2026 Enterprise Security & Risk Management System. All rights reserved.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6 text-xs text-slate-400">
+                <a href="#" @click.prevent="openAdminModal" class="hover:text-white transition-colors">Loss Prevention HO</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- FIREBASE AUTH LOGIN MODAL (USERNAME & PASSWORD ONLY) -->
+    <div v-if="showLoginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden relative">
+            <button @click="showLoginModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="bg-gradient-to-r from-brand-800 to-brand-700 p-6 text-white text-center">
+                <div class="w-14 h-14 bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
+                    <i class="fa-solid fa-shield-halved text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-bold">เข้าสู่ระบบตั้งค่าแอดมิน</h3>
+                <p class="text-xs text-red-100 mt-1">เฉพาะเจ้าหน้าที่หน่วยงาน LP & Safety ที่ได้รับสิทธิ์</p>
+            </div>
+
+            <!-- STEP 1: IF FIREBASE NOT CONFIGURED YET -->
+            <div v-if="!isFirebaseConfigured || showInitialConfigForm" class="p-6 space-y-4">
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i> <b>ตั้งค่าการเชื่อมต่อ Firebase ครั้งแรก:</b> นำ <code>firebaseConfig</code> จากหน้า Project Settings ของ Firebase มาวางด้านล่าง
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Firebase Config (JSON หรือ JS Object) *</label>
+                    <textarea 
+                        v-model="firebaseConfigText" 
+                        rows="6" 
+                        placeholder='{"apiKey": "...", "authDomain": "...", "databaseURL": "...", "projectId": "..."}' 
+                        class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-700"
+                    ></textarea>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button type="button" @click="applyFirebaseConfig" class="flex-grow bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl shadow transition-all text-sm">
+                        บันทึกการเชื่อมต่อ Firebase
+                    </button>
+                    <button v-if="isFirebaseConfigured" type="button" @click="showInitialConfigForm = false" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm">
+                        ยกเลิก
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: USERNAME & PASSWORD LOGIN FORM -->
+            <form v-else @submit.prevent="handleLogin" autocomplete="off" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-400"></i>
+                        <input v-model="loginForm.username" type="text" required autocomplete="off" placeholder="กรอก Username (เช่น admin)" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">รหัสผ่าน (Password)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400"></i>
+                        <input 
+                            v-model="loginForm.password" 
+                            :type="showLoginPassword ? 'text' : 'password'" 
+                            required 
+                            autocomplete="new-password" 
+                            placeholder="กรอก Password" 
+                            class="w-full pl-10 pr-12 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700"
+                        >
+                        <!-- EYE ICON BUTTON (HOLD TO VIEW, RELEASE TO HIDE) -->
+                        <button 
+                            type="button" 
+                            @mousedown="showLoginPassword = true" 
+                            @mouseup="showLoginPassword = false" 
+                            @mouseleave="showLoginPassword = false"
+                            @touchstart.prevent="showLoginPassword = true" 
+                            @touchend.prevent="showLoginPassword = false"
+                            class="absolute right-3 top-2.5 text-slate-400 hover:text-brand-700 p-1 rounded focus:outline-none transition-colors"
+                            title="กดค้างเพื่อดูรหัสผ่าน"
+                        >
+                            <i :class="showLoginPassword ? 'fa-solid fa-eye-slash text-brand-700 font-bold' : 'fa-solid fa-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" :disabled="isLoggingIn" class="w-full bg-brand-700 hover:bg-brand-800 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>{{ isLoggingIn ? 'กำลังตรวจสอบสิทธิ์...' : 'เข้าสู่ระบบ' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL MODAL (FULL SCREEN VIEW) -->
+    <div v-if="showAdminModal" class="fixed inset-0 z-50 flex flex-col bg-slate-900 animate-fade-in w-screen h-screen overflow-hidden">
+        <div class="bg-white w-full h-full flex flex-col overflow-hidden">
+            
+            <!-- ADMIN HEADER -->
+            <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-700 flex items-center justify-center text-lg shadow-md">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold">แผงควบคุมระบบ (Admin Control Center)</h2>
+                        <p class="text-xs text-slate-400">เชื่อมต่อ Firebase Anonymous Auth & Realtime Database (ผู้ใช้: <span class="font-mono text-slate-300">{{ currentUser?.username }}</span>)</p>
+                    </div>
+                </div>
+                <button @click="showAdminModal = false" class="text-slate-400 hover:text-white w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- ADMIN TABS NAVIGATION -->
+            <div class="bg-slate-100 px-6 pt-3 border-b border-slate-200 flex space-x-2 overflow-x-auto shrink-0">
+                <button 
+                    @click="adminTab = 'links'" 
+                    :class="adminTab === 'links' ? 'bg-white text-brand-700 border-t-2 border-brand-700 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                    class="px-5 py-3 rounded-t-xl text-sm flex items-center space-x-2 transition-all whitespace-nowrap"
+                >
+                    <i class="fa-solid fa-link"></i>
+                    <span>จัดการลิงก์ระบบงาน ({{ links.length }})</span>
+                </button>
+                <button 
+                    @click="adminTab = 'categories'" 
+                    :class="adminTab === 'categories' ? 'bg-white text-brand-700 border-t-2 border-brand-700 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                    class="px-5 py-3 rounded-t-xl text-sm flex items-center space-x-2 transition-all whitespace-nowrap"
+                >
+                    <i class="fa-solid fa-tags"></i>
+                    <span>จัดการหมวดหมู่ ({{ categories.length }})</span>
+                </button>
+                <button 
+                    @click="adminTab = 'users'" 
+                    :class="adminTab === 'users' ? 'bg-white text-brand-700 border-t-2 border-brand-700 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                    class="px-5 py-3 rounded-t-xl text-sm flex items-center space-x-2 transition-all whitespace-nowrap"
+                >
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>กำหนดสิทธิ์ผู้ดูแลระบบ ({{ adminUsers.length }})</span>
+                </button>
+                <button 
+                    @click="adminTab = 'announcement'" 
+                    :class="adminTab === 'announcement' ? 'bg-white text-brand-700 border-t-2 border-brand-700 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                    class="px-5 py-3 rounded-t-xl text-sm flex items-center space-x-2 transition-all whitespace-nowrap"
+                >
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span>จัดการประกาศด่วน</span>
+                </button>
+                <button 
+                    @click="openDatabaseTab" 
+                    :class="adminTab === 'database' ? 'bg-white text-brand-700 border-t-2 border-brand-700 font-bold shadow-sm' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                    class="px-5 py-3 rounded-t-xl text-sm flex items-center space-x-2 transition-all whitespace-nowrap"
+                >
+                    <i class="fa-solid fa-database"></i>
+                    <span>Firebase & Security Rules</span>
+                </button>
+            </div>
+
+            <!-- TAB CONTENT CONTAINER -->
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-grow bg-slate-50">
+                
+                <!-- TAB 1: MANAGE LINKS -->
+                <div v-if="adminTab === 'links'" class="space-y-6 max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h3 class="font-bold text-slate-800">รายการระบบงานทั้งหมดในพอร์ทัล</h3>
+                            <p class="text-xs text-slate-500">คุณสามารถเพิ่ม แก้ไข หรือลบลิงก์ระบบงานได้ที่นี่ (บันทึกลง Firebase Realtime Database ทันที)</p>
+                        </div>
+                        <button @click="openAddLinkModal" class="bg-brand-700 hover:bg-brand-800 text-white font-bold px-4 py-2 rounded-lg text-sm shadow transition-all flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>+ เพิ่มลิงก์ใหม่</span>
+                        </button>
+                    </div>
+
+                    <!-- Links Table -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">ไอคอน & ชื่อระบบ</th>
+                                        <th class="py-3.5 px-4">หมวดหมู่</th>
+                                        <th class="py-3.5 px-4">URL ลิงก์</th>
+                                        <th class="py-3.5 px-4 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    <tr v-if="links.length === 0">
+                                        <td colspan="4" class="py-8 text-center text-slate-400 text-sm">ยังไม่มีข้อมูลลิงก์ระบบงาน กดปุ่ม "+ เพิ่มลิงก์ใหม่" ด้านบนเพื่อเริ่มต้น</td>
+                                    </tr>
+                                    <tr v-for="link in links" :key="link.id" class="hover:bg-slate-50/80 transition-colors">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-9 h-9 rounded-lg bg-red-50 text-brand-700 flex items-center justify-center text-lg font-bold border border-red-100">
+                                                    <i :class="link.icon || 'fa-solid fa-link'"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="font-bold text-slate-800">{{ link.title }}</div>
+                                                    <div class="text-xs text-slate-400 line-clamp-1 max-w-xs">{{ link.description }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
+                                                {{ link.category }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 font-mono text-xs text-blue-600 truncate max-w-xs">
+                                            <a :href="link.url" target="_blank" class="hover:underline">{{ link.url }}</a>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button @click="editLink(link)" title="แก้ไข" class="w-8 h-8 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center border border-amber-200 transition-colors">
+                                                    <i class="fa-solid fa-pencil text-xs"></i>
+                                                </button>
+                                                <button @click="confirmDeleteLink(link)" title="ลบ" class="w-8 h-8 rounded bg-red-50 text-red-700 hover:bg-red-100 flex items-center justify-center border border-red-200 transition-colors">
+                                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MANAGE CATEGORIES -->
+                <div v-if="adminTab === 'categories'" class="space-y-6 max-w-7xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Add/Edit Category Form -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center">
+                                <i :class="editingCategory ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-folder-plus'" class="mr-2 text-brand-700"></i> 
+                                {{ editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่' }}
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-4">กำหนดหมวดหมู่และเลือกไอคอนสำหรับจัดกลุ่มระบบงานในหน้าหลัก</p>
+
+                            <form @submit.prevent="saveCategory" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อหมวดหมู่ (Category Name) *</label>
+                                    <input v-model="categoryInput" type="text" required placeholder="เช่น Loss Prevention หรือ Safety" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">เลือกไอคอนหมวดหมู่</label>
+                                    <div class="grid grid-cols-6 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 max-h-36 overflow-y-auto custom-scrollbar">
+                                        <button 
+                                            v-for="iconClass in availableIcons" 
+                                            :key="iconClass"
+                                            type="button"
+                                            @click="categoryIconInput = iconClass"
+                                            :class="categoryIconInput === iconClass ? 'bg-brand-700 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-200'"
+                                            class="p-2 rounded-lg text-base flex items-center justify-center border border-slate-200 transition-colors"
+                                        >
+                                            <i :class="iconClass"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-2 pt-2">
+                                    <button type="submit" class="flex-grow bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-lg text-sm shadow transition-all">
+                                        {{ editingCategory ? 'บันทึกการแก้ไข' : '+ เพิ่มหมวดหมู่' }}
+                                    </button>
+                                    <button v-if="editingCategory" type="button" @click="cancelEditCategory" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-2.5 rounded-lg text-sm transition-all">
+                                        ยกเลิก
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Categories List Table -->
+                        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="font-bold text-slate-800 mb-1">รายการหมวดหมู่ทั้งหมด ({{ categories.length }})</h3>
+                            <p class="text-xs text-slate-500 mb-4">การแก้ไขชื่อหมวดหมู่จะปรับเปลี่ยนหมวดหมู่ของระบบงานที่เกี่ยวข้องโดยอัตโนมัติ</p>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
+                                            <th class="py-2.5 px-4">ไอคอน & ชื่อหมวดหมู่</th>
+                                            <th class="py-2.5 px-4 text-center">จำนวนระบบงานที่ใช้</th>
+                                            <th class="py-2.5 px-4 text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-sm">
+                                        <tr v-if="categories.length === 0">
+                                            <td colspan="3" class="py-8 text-center text-slate-400 text-sm">ยังไม่มีหมวดหมู่ กรุณาเพิ่มหมวดหมู่ทางด้านซ้าย</td>
+                                        </tr>
+                                        <tr v-for="cat in categories" :key="cat.name" class="hover:bg-slate-50">
+                                            <td class="py-3 px-4 font-semibold text-slate-800">
+                                                <div class="flex items-center space-x-3">
+                                                    <div class="w-8 h-8 rounded-lg bg-red-50 text-brand-700 flex items-center justify-center border border-red-100">
+                                                        <i :class="cat.icon || 'fa-solid fa-folder'"></i>
+                                                    </div>
+                                                    <span>{{ cat.name }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 px-4 text-center">
+                                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {{ links.filter(l => l.category === cat.name).length }} รายการ
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4 text-center">
+                                                <div class="flex items-center justify-center space-x-2">
+                                                    <button @click="startEditCategory(cat)" title="แก้ไขหมวดหมู่" class="w-8 h-8 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center border border-amber-200 transition-colors">
+                                                        <i class="fa-solid fa-pencil text-xs"></i>
+                                                    </button>
+                                                    <button @click="deleteCategory(cat.name)" title="ลบหมวดหมู่" class="w-8 h-8 rounded bg-red-50 text-red-700 hover:bg-red-100 flex items-center justify-center border border-red-200 transition-colors">
+                                                        <i class="fa-solid fa-trash-can text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: MANAGE ADMIN ROLES IN FIREBASE DB (ANONYMOUS AUTH + USERNAME/PASSWORD) -->
+                <div v-if="adminTab === 'users'" class="space-y-6 max-w-7xl mx-auto">
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs text-blue-900 flex items-start space-x-3">
+                        <i class="fa-solid fa-shield-halved text-blue-600 text-lg mt-0.5"></i>
+                        <div>
+                            <p class="font-bold">ระบบจัดการผู้ดูแลระบบผ่าน Firebase Anonymous Auth & Realtime Database:</p>
+                            <p class="mt-0.5">สามารถเพิ่ม แก้ไข หรือลบ User / Password ได้จากหน้านี้โดยตรง รหัสผ่านจะถูกเข้ารหัสแบบ <b>SHA-256</b> ก่อนบันทึกลงฐานข้อมูล Firebase</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Add Admin User Form -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center">
+                                <i class="fa-solid fa-user-plus mr-2 text-brand-700"></i> เพิ่มผู้ดูแลระบบใหม่
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-4">สร้าง Username / Password และกำหนดสิทธิ์เข้าใช้งานหน้าตั้งค่า</p>
+
+                            <form @submit.prevent="addAdminRole" autocomplete="off" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Username (ใช้ล็อกอิน) *</label>
+                                    <input v-model="userForm.username" type="text" required autocomplete="off" placeholder="เช่น lp_manager" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Password *</label>
+                                    <div class="relative">
+                                        <input v-model="userForm.password" :type="showNewUserPassword ? 'text' : 'password'" required autocomplete="new-password" placeholder="กำหนดรหัสผ่าน" class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                                        <button
+                                            type="button"
+                                            @mousedown="showNewUserPassword = true"
+                                            @mouseup="showNewUserPassword = false"
+                                            @mouseleave="showNewUserPassword = false"
+                                            @touchstart.prevent="showNewUserPassword = true"
+                                            @touchend.prevent="showNewUserPassword = false"
+                                            class="absolute right-2.5 top-2 text-slate-400 hover:text-brand-700 p-0.5"
+                                            title="กดค้างเพื่อดูรหัสผ่าน"
+                                        >
+                                            <i :class="showNewUserPassword ? 'fa-solid fa-eye-slash text-brand-700' : 'fa-solid fa-eye'"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อ-นามสกุล / ชื่อผู้ใช้งาน *</label>
+                                    <input v-model="userForm.name" type="text" required placeholder="เช่น นายสมชาย ป้องกันดี" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">ตำแหน่ง / สิทธิ์ (Role)</label>
+                                    <select v-model="userForm.role" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-white">
+                                        <option value="LP Admin">LP Admin (ผู้ดูแลระบบสูญเสีย)</option>
+                                        <option value="Safety Officer">Safety Officer (เจ้าหน้าที่ความปลอดภัย)</option>
+                                        <option value="Super Admin">Super Admin (ผู้ดูแลระบบหลัก)</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" :disabled="currentUser?.role !== 'Super Admin'" class="w-full bg-slate-900 hover:bg-black disabled:opacity-50 text-white font-bold py-2.5 rounded-lg text-sm shadow transition-all">
+                                    + บันทึกผู้ใช้ใหม่
+                                </button>
+                                <p v-if="currentUser?.role !== 'Super Admin'" class="text-[11px] text-amber-600 text-center">
+                                    * เฉพาะ Super Admin เท่านั้นที่สามารถเพิ่มหรือแก้ไขสิทธิ์ผู้ใช้ได้
+                                </p>
+                            </form>
+                        </div>
+
+                        <!-- Users List Table -->
+                        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="font-bold text-slate-800 mb-1">รายชื่อผู้มีสิทธิ์ดูแลระบบใน Firebase ({{ adminUsers.length }})</h3>
+                            <p class="text-xs text-slate-500 mb-4">ตรวจสอบข้อมูล Username และระดับสิทธิ์การเข้าถึงระบบตั้งค่า</p>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
+                                            <th class="py-2.5 px-3">ผู้ใช้งาน</th>
+                                            <th class="py-2.5 px-3">USERNAME</th>
+                                            <th class="py-2.5 px-3">สิทธิ์</th>
+                                            <th class="py-2.5 px-3 text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-sm">
+                                        <tr v-for="user in adminUsers" :key="user.id" class="hover:bg-slate-50">
+                                            <td class="py-3 px-3 font-semibold text-slate-800">{{ user.name }}</td>
+                                            <td class="py-3 px-3 font-mono text-xs text-slate-600">{{ user.username }}</td>
+                                            <td class="py-3 px-3">
+                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-brand-800">
+                                                    {{ user.role }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-3 text-center">
+                                                <div class="flex items-center justify-center space-x-1.5">
+                                                    <!-- EYE ICON -->
+                                                    <button 
+                                                        v-if="user.role !== 'Super Admin' || currentUser?.role === 'Super Admin'"
+                                                        @click="viewUserDetails(user)" 
+                                                        title="ดูข้อมูลผู้ใช้งาน" 
+                                                        class="w-8 h-8 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center justify-center border border-blue-200 transition-colors"
+                                                    >
+                                                        <i class="fa-solid fa-eye text-xs"></i>
+                                                    </button>
+                                                    <!-- PENCIL ICON -->
+                                                    <button 
+                                                        v-if="currentUser?.role === 'Super Admin'"
+                                                        @click="openEditUser(user)" 
+                                                        title="แก้ไขผู้ใช้งาน" 
+                                                        class="w-8 h-8 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center border border-amber-200 transition-colors"
+                                                    >
+                                                        <i class="fa-solid fa-pencil text-xs"></i>
+                                                    </button>
+                                                    <!-- TRASH CAN ICON -->
+                                                    <button 
+                                                        v-if="currentUser?.role === 'Super Admin' && user.id !== currentUser?.id"
+                                                        @click="deleteAdminRole(user.id)"
+                                                        title="ลบผู้ใช้งาน"
+                                                        class="w-8 h-8 rounded bg-red-50 text-red-700 hover:bg-red-100 flex items-center justify-center border border-red-200 transition-colors"
+                                                    >
+                                                        <i class="fa-solid fa-trash-can text-xs"></i>
+                                                    </button>
+                                                    <span v-if="user.role === 'Super Admin' && currentUser?.role !== 'Super Admin'" class="text-xs text-slate-400 italic px-1 flex items-center space-x-1">
+                                                        <i class="fa-solid fa-shield-halved text-brand-700"></i>
+                                                        <span>Super Admin</span>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 4: ANNOUNCEMENT SETTINGS -->
+                <div v-if="adminTab === 'announcement'" class="space-y-6 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                            <div class="w-10 h-10 rounded-lg bg-red-50 text-brand-700 flex items-center justify-center text-lg border border-red-100">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800">จัดการข้อความประกาศด่วน (Announcement Bar)</h3>
+                                <p class="text-xs text-slate-500">ข้อความนี้จะแสดงในแถบแจ้งเตือนด่วนด้านบนของหน้าหลักพอร์ทัล (หากเว้นว่างจะซ่อนแถบประกาศ)</p>
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="saveAnnouncement" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1.5">ข้อความประกาศด่วน</label>
+                                <textarea 
+                                    v-model="announcementInput" 
+                                    rows="3" 
+                                    placeholder="ระบุข้อความประกาศด่วน..." 
+                                    class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-brand-700 focus:outline-none"
+                                ></textarea>
+                            </div>
+
+                            <!-- Live Preview -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">ตัวอย่างการแสดงผลจริง (Live Preview):</label>
+                                <div class="bg-slate-900 text-slate-300 rounded-xl p-3 flex items-center space-x-3 text-xs sm:text-sm border border-slate-800">
+                                    <span class="bg-brand-700 text-white text-xs px-2.5 py-0.5 rounded font-bold uppercase tracking-wide flex items-center shrink-0">
+                                        <i class="fa-solid fa-bell mr-1.5"></i> ประกาศด่วน
+                                    </span>
+                                    <span class="truncate">{{ announcementInput || 'ยังไม่ได้ระบุข้อความ (แถบประกาศจะถูกซ่อน)' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <button type="button" @click="clearAnnouncement" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                                    ล้างข้อความประกาศ
+                                </button>
+                                <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-bold px-6 py-2.5 rounded-lg text-sm shadow transition-all flex items-center space-x-2">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    <span>บันทึกประกาศด่วน</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB 5: FIREBASE & SECURITY RULES (RE-AUTHENTICATE WITH FIREBASE PASSWORD FOR SUPER ADMIN) -->
+                <div v-if="adminTab === 'database'" class="space-y-6 max-w-7xl mx-auto">
+                    
+                    <!-- SECONDARY SUPER ADMIN RE-AUTH GATE -->
+                    <div v-if="!isDbAuthenticated" class="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden my-6">
+                        <div class="bg-slate-900 p-6 text-white text-center">
+                            <div class="w-12 h-12 bg-brand-700 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl shadow">
+                                <i class="fa-solid fa-shield-halved text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-lg font-bold">ยืนยันรหัสผ่าน Super Admin</h3>
+                            <p class="text-xs text-slate-400 mt-1">ยืนยันรหัสผ่านของคุณอีกครั้งเพื่อเข้าถึงส่วนตั้งค่าฐานข้อมูล</p>
+                        </div>
+
+                        <form @submit.prevent="verifyDbSuperAdmin" autocomplete="off" class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">บัญชีปัจจุบัน</label>
+                                <input :value="currentUser?.username" type="text" disabled class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 text-sm font-mono">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">ยืนยันรหัสผ่าน (Password) *</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400"></i>
+                                    <input 
+                                        v-model="dbAuthForm.password" 
+                                        :type="showDbAuthPassword ? 'text' : 'password'" 
+                                        required 
+                                        autocomplete="new-password" 
+                                        placeholder="กรอกรหัสผ่านของคุณ" 
+                                        class="w-full pl-10 pr-12 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700"
+                                    >
+                                    <button 
+                                        type="button" 
+                                        @mousedown="showDbAuthPassword = true" 
+                                        @mouseup="showDbAuthPassword = false" 
+                                        @mouseleave="showDbAuthPassword = false"
+                                        @touchstart.prevent="showDbAuthPassword = true" 
+                                        @touchend.prevent="showDbAuthPassword = false"
+                                        class="absolute right-3 top-2.5 text-slate-400 hover:text-brand-700 p-1 rounded focus:outline-none"
+                                        title="กดค้างเพื่อดูรหัสผ่าน"
+                                    >
+                                        <i :class="showDbAuthPassword ? 'fa-solid fa-eye-slash text-brand-700' : 'fa-solid fa-eye'"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl shadow transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-unlock-keyhole"></i>
+                                <span>ปลดล็อกเข้าใช้งานฐานข้อมูล</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ACTUAL DATABASE & SECURITY RULES CONTENT -->
+                    <div v-else class="space-y-4">
+                        <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs text-emerald-800">
+                            <div class="flex items-center space-x-2 font-semibold">
+                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                                <span>ยืนยันสิทธิ์ระดับ Super Admin สำเร็จแล้ว</span>
+                            </div>
+                            <button @click="isDbAuthenticated = false" class="text-emerald-700 hover:underline font-bold">
+                                <i class="fa-solid fa-lock mr-1"></i> ล็อกหน้านี้
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Firebase Config & Backup -->
+                            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                <div class="flex items-center space-x-3 text-amber-600">
+                                    <i class="fa-solid fa-fire text-2xl"></i>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800">การตั้งค่า Firebase SDK</h3>
+                                        <p class="text-xs text-slate-500">เชื่อมต่อกับโปรเจกต์: <span class="font-mono font-bold text-slate-700">{{ activeProjectId }}</span></p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">อัปเดต Firebase Config (JSON)</label>
+                                    <textarea v-model="firebaseConfigText" rows="4" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-brand-700 focus:outline-none"></textarea>
+                                    <button type="button" @click="applyFirebaseConfig" class="mt-2 bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-lg text-xs font-bold">
+                                        บันทึกการเปลี่ยนแปลง Config
+                                    </button>
+                                </div>
+
+                                <div class="border-t border-slate-100 pt-3 flex flex-wrap gap-3">
+                                    <button @click="exportDataJSON" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center space-x-2">
+                                        <i class="fa-solid fa-download"></i>
+                                        <span>ส่งออกข้อมูล (Export JSON)</span>
+                                    </button>
+                                    <button @click="triggerJSONImport" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold flex items-center space-x-2">
+                                        <i class="fa-solid fa-upload"></i>
+                                        <span>นำเข้าข้อมูล (Import JSON)</span>
+                                    </button>
+                                    <input ref="jsonFileInput" type="file" accept=".json" @change="importDataJSON" class="hidden">
+                                </div>
+                            </div>
+
+                            <!-- Recommended Firebase Realtime Database Security Rules -->
+                            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2 text-slate-800">
+                                        <i class="fa-solid fa-shield-halved text-brand-700 text-xl"></i>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800">Firebase Realtime Database Rules</h3>
+                                            <p class="text-xs text-slate-500">คัดลอกไปวางในแท็บ Rules ของ Realtime Database</p>
+                                        </div>
+                                    </div>
+                                    <button @click="copySecurityRules" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                        <i class="fa-regular fa-copy mr-1"></i> คัดลอก Rules
+                                    </button>
+                                </div>
+                                <pre class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed">{{ recommendedSecurityRules }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT LINK MODAL -->
+    <div v-if="showLinkModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden relative">
+            <div class="bg-gradient-to-r from-brand-800 to-brand-700 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i :class="editingLink ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-plus-circle'" class="text-xl"></i>
+                    <h3 class="font-bold text-base">{{ editingLink ? 'แก้ไขลิงก์ระบบงาน' : 'เพิ่มลิงก์ระบบงานใหม่' }}</h3>
+                </div>
+                <button @click="showLinkModal = false" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="saveLink" class="p-6 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อระบบงาน (System Title) *</label>
+                    <input v-model="linkForm.title" type="text" required placeholder="เช่น Incident Report System" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">URL ลิงก์ปลายทาง (ต้องขึ้นต้นด้วย https:// หรือ http://) *</label>
+                    <input v-model="linkForm.url" type="url" required placeholder="https://..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">หมวดหมู่ (Category) *</label>
+                    <select v-model="linkForm.category" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-white">
+                        <option v-if="categories.length === 0" disabled value="">-- กรุณาเพิ่มหมวดหมู่ก่อน --</option>
+                        <option v-for="cat in categories" :key="cat.name" :value="cat.name">{{ cat.name }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">เลือกไอคอนระบบงาน</label>
+                    <div class="grid grid-cols-6 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 max-h-36 overflow-y-auto custom-scrollbar">
+                        <button 
+                            v-for="iconClass in availableIcons" 
+                            :key="iconClass"
+                            type="button"
+                            @click="selectIcon(iconClass)"
+                            :class="linkForm.icon === iconClass ? 'bg-brand-700 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-200'"
+                            class="p-2.5 rounded-lg text-lg flex items-center justify-center border border-slate-200 transition-colors"
+                        >
+                            <i :class="iconClass"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">คำอธิบายระบบงาน</label>
+                    <textarea v-model="linkForm.description" rows="2" placeholder="ระบุรายละเอียดหน้าที่ของระบบงาน..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" @click="showLinkModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-brand-700 hover:bg-brand-800 text-white rounded-lg text-sm font-bold shadow-md">
+                        {{ editingLink ? 'บันทึกการแก้ไข' : 'เพิ่มระบบงาน' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW USER DETAILS MODAL (NO PASSWORD STORED) -->
+    <div v-if="showUserDetailModal && selectedUserDetail" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden relative">
+            <div class="bg-slate-900 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-id-card text-brand-500 text-xl"></i>
+                    <h3 class="font-bold text-base">รายละเอียดสิทธิ์ผู้ดูแลระบบ</h3>
+                </div>
+                <button @click="showUserDetailModal = false" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <div>
+                        <span class="text-xs font-bold uppercase text-slate-400 block mb-0.5">ชื่อ-นามสกุล / ชื่อใช้งาน</span>
+                        <span class="text-base font-bold text-slate-800">{{ selectedUserDetail.name }}</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-bold uppercase text-slate-400 block mb-0.5">Username (ใช้ล็อกอิน)</span>
+                        <span class="font-mono text-sm font-semibold text-slate-700">{{ selectedUserDetail.username }}</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-bold uppercase text-slate-400 block mb-0.5">สถานะรหัสผ่าน</span>
+                        <span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 inline-flex items-center space-x-1 font-semibold">
+                            <i class="fa-solid fa-lock"></i>
+                            <span>เข้ารหัสปลอดภัย (SHA-256)</span>
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-bold uppercase text-slate-400 block mb-0.5">ตำแหน่ง / สิทธิ์</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-brand-800 inline-block">{{ selectedUserDetail.role }}</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button @click="showUserDetailModal = false" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg text-sm transition-colors">
+                        ปิดหน้าต่าง
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT USER MODAL -->
+    <div v-if="showUserEditModal && editingUser" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden relative">
+            <div class="bg-gradient-to-r from-brand-800 to-brand-700 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-user-pen text-xl"></i>
+                    <h3 class="font-bold text-base">แก้ไขข้อมูลผู้ดูแลระบบ</h3>
+                </div>
+                <button @click="showUserEditModal = false" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="saveEditUser" autocomplete="off" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Username *</label>
+                    <input v-model="editingUser.username" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">รหัสผ่านใหม่ (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</label>
+                    <div class="relative">
+                        <input v-model="editingUser.newPassword" :type="showEditUserPassword ? 'text' : 'password'" autocomplete="new-password" placeholder="กรอกรหัสผ่านใหม่หากต้องการเปลี่ยน" class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                        <button
+                            type="button"
+                            @mousedown="showEditUserPassword = true"
+                            @mouseup="showEditUserPassword = false"
+                            @mouseleave="showEditUserPassword = false"
+                            @touchstart.prevent="showEditUserPassword = true"
+                            @touchend.prevent="showEditUserPassword = false"
+                            class="absolute right-2.5 top-2 text-slate-400 hover:text-brand-700 p-0.5"
+                            title="กดค้างเพื่อดูรหัสผ่าน"
+                        >
+                            <i :class="showEditUserPassword ? 'fa-solid fa-eye-slash text-brand-700' : 'fa-solid fa-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อ-นามสกุล / ชื่อผู้ใช้งาน *</label>
+                    <input v-model="editingUser.name" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">ตำแหน่ง / สิทธิ์ (Role)</label>
+                    <select v-model="editingUser.role" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-white">
+                        <option value="LP Admin">LP Admin (ผู้ดูแลระบบสูญเสีย)</option>
+                        <option value="Safety Officer">Safety Officer (เจ้าหน้าที่ความปลอดภัย)</option>
+                        <option value="Super Admin">Super Admin (ผู้ดูแลระบบหลัก)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" @click="showUserEditModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-brand-700 hover:bg-brand-800 text-white rounded-lg text-sm font-bold shadow-md">
+                        บันทึกการแก้ไข
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 text-center">
+            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">ยืนยันการลบระบบงาน?</h3>
+            <p class="text-xs text-slate-500 mb-6">คุณกำลังจะลบรายการ "<b>{{ linkToDelete?.title }}</b>" ออกจากพอร์ทัล ข้อมูลนี้จะไม่สามารถกู้คืนได้</p>
+            
+            <div class="flex items-center justify-center space-x-3">
+                <button @click="showDeleteModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold">
+                    ยกเลิก
+                </button>
+                <button @click="deleteLinkConfirmed" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold shadow">
+                    ยืนยันการลบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION FLOATING BANNER -->
+    <div v-if="notification.show" class="fixed bottom-6 right-6 z-50 transition-all duration-300 transform translate-y-0">
+        <div :class="{
+            'bg-emerald-800 text-white': notification.type === 'success',
+            'bg-red-800 text-white': notification.type === 'error',
+            'bg-slate-800 text-white': notification.type === 'info'
+        }" class="px-5 py-3.5 rounded-xl shadow-2xl flex items-center space-x-3 border border-white/20">
+            <i :class="{
+                'fa-solid fa-circle-check text-emerald-400': notification.type === 'success',
+                'fa-solid fa-circle-xmark text-red-400': notification.type === 'error',
+                'fa-solid fa-circle-info text-blue-400': notification.type === 'info'
+            }" class="text-xl"></i>
+            <span class="text-sm font-medium">{{ notification.message }}</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- VUE APPLICATION LOGIC WITH FIREBASE ANONYMOUS AUTH & REALTIME DATABASE -->
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+// =========================================================================
+// [สำคัญ] วาง firebaseConfig ขององค์กรที่นี่ก่อนอัปโหลดขึ้น GitHub
+// เมื่อวางแล้ว หน้าเว็บจะเชื่อมต่อฐานข้อมูลอัตโนมัติ และจะไม่ขึ้นหน้าให้กรอก Config อีก
+// =========================================================================
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBumiyd_1pVVBqOQvnZVD3rrtHNQpuYcSM",
+  authDomain: "lp-safetyweblink-4696f.firebaseapp.com",
+  databaseURL: "https://lp-safetyweblink-4696f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "lp-safetyweblink-4696f",
+  storageBucket: "lp-safetyweblink-4696f.firebasestorage.app",
+  messagingSenderId: "692068047895",
+  appId: "1:692068047895:web:03cb29c362f784ceac1052"
+};
+
+// SHA-256 password hashing helper (Web Crypto API)
+const hashPassword = async (plainText) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plainText);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+createApp({
+    setup() {
+        const availableIcons = [
+            'fa-solid fa-shield-halved',
+            'fa-solid fa-video',
+            'fa-solid fa-triangle-exclamation',
+            'fa-solid fa-clipboard-check',
+            'fa-solid fa-fire-extinguisher',
+            'fa-solid fa-id-card',
+            'fa-solid fa-boxes-stacked',
+            'fa-solid fa-graduation-cap',
+            'fa-solid fa-route',
+            'fa-solid fa-user-shield',
+            'fa-solid fa-lock',
+            'fa-solid fa-chart-line',
+            'fa-solid fa-building-shield',
+            'fa-solid fa-walkie-talkie',
+            'fa-solid fa-kit-medical',
+            'fa-solid fa-truck-medical',
+            'fa-solid fa-helmet-safety',
+            'fa-solid fa-file-contract',
+            'fa-solid fa-folder',
+            'fa-solid fa-tags'
+        ];
+
+        const recommendedSecurityRules = `{
+  "rules": {
+    "portal_data": {
+      "links": {
+        ".read": true,
+        ".write": "auth != null"
+      },
+      "categories": {
+        ".read": true,
+        ".write": "auth != null"
+      },
+      "announcement": {
+        ".read": true,
+        ".write": "auth != null"
+      },
+      "admins": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}`;
+
+        // --- STATE MANAGEMENT ---
+        const links = ref([]);
+        const adminUsers = ref([]);
+        const categories = ref([]);
+        const searchQuery = ref('');
+        const selectedCategory = ref('All');
+        
+        const isFirebaseConfigured = ref(false);
+        const activeProjectId = ref('');
+        const firebaseConfigText = ref('');
+        const showInitialConfigForm = ref(false);
+
+        const isLoggedIn = ref(false);
+        const isLoggingIn = ref(false);
+        const currentUser = ref(null);
+        const showLoginPassword = ref(false);
+
+        // Announcement state
+        const announcementText = ref('');
+        const announcementInput = ref('');
+
+        // Secondary DB Super Admin Re-Auth state
+        const isDbAuthenticated = ref(false);
+        const dbAuthForm = ref({ password: '' });
+        const showDbAuthPassword = ref(false);
+
+        // Modals visibility
+        const showLoginModal = ref(false);
+        const showAdminModal = ref(false);
+        const showLinkModal = ref(false);
+        const showDeleteModal = ref(false);
+        
+        // Category management state
+        const categoryInput = ref('');
+        const categoryIconInput = ref('fa-solid fa-folder');
+        const editingCategory = ref(null);
+
+        // User management modals state
+        const showUserDetailModal = ref(false);
+        const selectedUserDetail = ref(null);
+        const showUserEditModal = ref(false);
+        const editingUser = ref(null);
+
+        const adminTab = ref('links');
+
+        // Form states (Username & Password)
+        const loginForm = ref({ username: '', password: '' });
+        const userForm = ref({ username: '', password: '', name: '', role: 'LP Admin' });
+        const showNewUserPassword = ref(false);
+        const showEditUserPassword = ref(false);
+        const linkForm = ref({ id: null, title: '', url: '', category: '', icon: 'fa-solid fa-shield-halved', description: '' });
+        const editingLink = ref(false);
+        const linkToDelete = ref(null);
+
+        // Notification state
+        const notification = ref({ show: false, message: '', type: 'info' });
+
+        let dbRef = null;
+        let authInstance = null;
+
+        // --- PARSE & INITIALIZE FIREBASE ---
+        const parseFirebaseConfigInput = (rawText) => {
+            const trimmed = rawText.trim();
+            const firstBrace = trimmed.indexOf('{');
+            const lastBrace = trimmed.lastIndexOf('}');
+            if (firstBrace === -1 || lastBrace === -1) throw new Error('Invalid config format');
+            const objText = trimmed.slice(firstBrace, lastBrace + 1);
+            try {
+                return JSON.parse(objText);
+            } catch (e) {
+                const jsonified = objText
+                    .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                    .replace(/'/g, '"')
+                    .replace(/,\s*}/g, '}');
+                return JSON.parse(jsonified);
+            }
+        };
+
+        const initFirebaseApp = (configObj) => {
+            try {
+                if (!configObj || !configObj.apiKey || !configObj.databaseURL) {
+                    throw new Error('ข้อมูล apiKey หรือ databaseURL ไม่ครบถ้วน');
+                }
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(configObj);
+                } else {
+                    const existing = firebase.app();
+                    if (existing.options.databaseURL !== configObj.databaseURL) {
+                        existing.delete().then(() => firebase.initializeApp(configObj));
+                    }
+                }
+                authInstance = firebase.auth();
+                dbRef = firebase.database().ref('portal_data');
+                isFirebaseConfigured.value = true;
+                activeProjectId.value = configObj.projectId || 'Connected';
+                firebaseConfigText.value = JSON.stringify(configObj, null, 2);
+
+                // Listen to Realtime Database Public Data
+                dbRef.child('links').on('value', (snap) => {
+                    const val = snap.val();
+                    links.value = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
+                });
+
+                dbRef.child('categories').on('value', (snap) => {
+                    const val = snap.val();
+                    categories.value = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
+                });
+
+                dbRef.child('announcement').on('value', (snap) => {
+                    const val = snap.val() || '';
+                    announcementText.value = val;
+                    announcementInput.value = val;
+                });
+
+                // Sign in anonymously to satisfy Firebase Realtime Database Rules (auth != null)
+                authInstance.signInAnonymously().catch((err) => {
+                    console.error('Anonymous Auth Error:', err);
+                    showNotification('กรุณาเปิดใช้งาน Anonymous ใน Firebase Authentication > Sign-in method', 'error');
+                });
+
+                return true;
+            } catch (err) {
+                console.error('Firebase Init Error:', err);
+                showNotification('การตั้งค่า Firebase Config ไม่ถูกต้อง: ' + err.message, 'error');
+                return false;
+            }
+        };
+
+        const applyFirebaseConfig = () => {
+            try {
+                const parsed = parseFirebaseConfigInput(firebaseConfigText.value);
+                const ok = initFirebaseApp(parsed);
+                if (ok) {
+                    localStorage.setItem('lp_safety_firebase_config', JSON.stringify(parsed));
+                    showInitialConfigForm.value = false;
+                    showNotification('เชื่อมต่อ Firebase สำเร็จแล้ว กรุณาล็อกอินด้วย Username / Password');
+                }
+            } catch (e) {
+                showNotification('รูปแบบ Firebase Config ไม่ถูกต้อง กรุณาคัดลอกออบเจกต์ {...} มาวางให้ครบถ้วน', 'error');
+            }
+        };
+
+        onMounted(() => {
+            if (DEFAULT_FIREBASE_CONFIG) {
+                initFirebaseApp(DEFAULT_FIREBASE_CONFIG);
+                return;
+            }
+            const savedCfg = localStorage.getItem('lp_safety_firebase_config');
+            if (savedCfg) {
+                try {
+                    initFirebaseApp(JSON.parse(savedCfg));
+                } catch (e) {
+                    localStorage.removeItem('lp_safety_firebase_config');
+                }
+            }
+        });
+
+        // --- COMPUTED PROPERTIES ---
+        const filteredLinks = computed(() => {
+            return links.value.filter(link => {
+                const matchesSearch = searchQuery.value === '' || 
+                    link.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                    (link.description && link.description.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                    link.category.toLowerCase().includes(searchQuery.value.toLowerCase());
+                
+                const matchesCat = selectedCategory.value === 'All' || link.category === selectedCategory.value;
+
+                return matchesSearch && matchesCat;
+            });
+        });
+
+        const currentDate = computed(() => {
+            const today = new Date();
+            return today.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+        });
+
+        // --- HELPER FUNCTIONS ---
+        const showNotification = (msg, type = 'success') => {
+            notification.value = { show: true, message: msg, type: type };
+            setTimeout(() => {
+                notification.value.show = false;
+            }, 3800);
+        };
+
+        const isSafeUrl = (url) => {
+            try {
+                const parsed = new URL(url);
+                return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+            } catch (e) {
+                return false;
+            }
+        };
+
+        const formatUrlDisplay = (url) => {
+            try {
+                const parsed = new URL(url);
+                return parsed.hostname + parsed.pathname;
+            } catch(e) {
+                return url;
+            }
+        };
+
+        // --- AUTHENTICATION METHODS (USERNAME & PASSWORD) ---
+        const openLoginModal = () => {
+            loginForm.value = { username: '', password: '' };
+            showLoginPassword.value = false;
+            showInitialConfigForm.value = !isFirebaseConfigured.value;
+            showLoginModal.value = true;
+        };
+
+        const handleLogin = async () => {
+            if (!authInstance || !dbRef) {
+                showNotification('กรุณาตั้งค่า Firebase Config ก่อนเข้าสู่ระบบ', 'error');
+                return;
+            }
+            isLoggingIn.value = true;
+            try {
+                if (!authInstance.currentUser) {
+                    await authInstance.signInAnonymously();
+                }
+
+                const inputUsername = loginForm.value.username.trim().toLowerCase();
+                const inputPassword = loginForm.value.password;
+                const inputHash = await hashPassword(inputPassword);
+
+                const adminsSnap = await dbRef.child('admins').once('value');
+                const adminsObj = adminsSnap.val();
+
+                if (!adminsObj) {
+                    showNotification('ยังไม่มีข้อมูลผู้ดูแลระบบใน Firebase (กรุณาเพิ่มบัญชีแรกใน Realtime Database ตามคู่มือ)', 'error');
+                    return;
+                }
+
+                let matchedKey = null;
+                let matchedUser = null;
+
+                for (const [key, user] of Object.entries(adminsObj)) {
+                    if (user && user.username && user.username.trim().toLowerCase() === inputUsername) {
+                        const matchHashed = user.passwordHash && user.passwordHash === inputHash;
+                        const matchPlainInitial = user.password && user.password === inputPassword;
+                        if (matchHashed || matchPlainInitial) {
+                            matchedKey = key;
+                            matchedUser = user;
+                            // Auto-upgrade initial plaintext password created in Firebase Console to SHA-256 hash
+                            if (matchPlainInitial && !matchHashed) {
+                                await dbRef.child(`admins/${key}`).update({
+                                    id: key,
+                                    passwordHash: inputHash,
+                                    password: null
+                                });
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (!matchedUser) {
+                    showNotification('เข้าสู่ระบบไม่สำเร็จ: Username หรือ Password ไม่ถูกต้อง', 'error');
+                    return;
+                }
+
+                isLoggedIn.value = true;
+                currentUser.value = {
+                    id: matchedKey,
+                    username: matchedUser.username,
+                    name: matchedUser.name || matchedUser.username,
+                    role: matchedUser.role || 'LP Admin'
+                };
+
+                dbRef.child('admins').on('value', (snap) => {
+                    const val = snap.val();
+                    adminUsers.value = val ? Object.entries(val).map(([k, v]) => ({ ...v, id: k })) : [];
+                });
+
+                showLoginModal.value = false;
+                loginForm.value = { username: '', password: '' };
+                showAdminModal.value = true;
+                showNotification('เข้าสู่ระบบตั้งค่าแอดมินสำเร็จ');
+            } catch (err) {
+                console.error('Login Error:', err);
+                showNotification('เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase (ตรวจสอบการเปิด Anonymous Auth และ Security Rules)', 'error');
+            } finally {
+                isLoggingIn.value = false;
+            }
+        };
+
+        const logout = async () => {
+            if (dbRef) {
+                dbRef.child('admins').off();
+            }
+            isLoggedIn.value = false;
+            currentUser.value = null;
+            adminUsers.value = [];
+            isDbAuthenticated.value = false;
+            dbAuthForm.value = { password: '' };
+            loginForm.value = { username: '', password: '' };
+            showAdminModal.value = false;
+            showNotification('ออกจากระบบเรียบร้อยแล้ว', 'info');
+        };
+
+        const openAdminModal = () => {
+            if (!isLoggedIn.value) {
+                openLoginModal();
+            } else {
+                isDbAuthenticated.value = false;
+                dbAuthForm.value = { password: '' };
+                showAdminModal.value = true;
+            }
+        };
+
+        // --- DATABASE SUPER ADMIN RE-AUTH ---
+        const openDatabaseTab = () => {
+            adminTab.value = 'database';
+            isDbAuthenticated.value = false;
+            dbAuthForm.value = { password: '' };
+            showDbAuthPassword.value = false;
+        };
+
+        const verifyDbSuperAdmin = async () => {
+            if (currentUser.value?.role !== 'Super Admin') {
+                showNotification('เฉพาะบัญชีสิทธิ์ Super Admin เท่านั้นที่เข้าถึงส่วนนี้ได้!', 'error');
+                return;
+            }
+            try {
+                const snap = await dbRef.child(`admins/${currentUser.value.id}`).once('value');
+                const adminData = snap.val();
+                const inputHash = await hashPassword(dbAuthForm.value.password);
+
+                if (adminData && (adminData.passwordHash === inputHash || adminData.password === dbAuthForm.value.password)) {
+                    isDbAuthenticated.value = true;
+                    dbAuthForm.value = { password: '' };
+                    showNotification('ยืนยันสิทธิ์ Super Admin สำเร็จ');
+                } else {
+                    showNotification('รหัสผ่านไม่ถูกต้อง ไม่สามารถปลดล็อกได้!', 'error');
+                }
+            } catch (err) {
+                showNotification('ไม่สามารถตรวจสอบสิทธิ์ได้ กรุณาลองใหม่อีกครั้ง', 'error');
+            }
+        };
+
+        // --- ANNOUNCEMENT MANAGEMENT ---
+        const saveAnnouncement = async () => {
+            if (!dbRef) return;
+            try {
+                await dbRef.child('announcement').set(announcementInput.value.trim());
+                showNotification('บันทึกข้อความประกาศด่วนลง Firebase เรียบร้อยแล้ว');
+            } catch (e) {
+                showNotification('ไม่มีสิทธิ์บันทึกข้อมูล กรุณาตรวจสอบ Security Rules', 'error');
+            }
+        };
+
+        const clearAnnouncement = async () => {
+            if (!dbRef) return;
+            try {
+                announcementInput.value = '';
+                await dbRef.child('announcement').set('');
+                showNotification('ล้างข้อความประกาศด่วนเรียบร้อยแล้ว', 'info');
+            } catch (e) {
+                showNotification('เกิดข้อผิดพลาดในการล้างข้อมูล', 'error');
+            }
+        };
+
+        // --- LINK MANAGEMENT METHODS ---
+        const openAddLinkModal = () => {
+            if (categories.value.length === 0) {
+                showNotification('กรุณาสร้างหมวดหมู่ในแท็บ "จัดการหมวดหมู่" ก่อนเพิ่มลิงก์ระบบงาน', 'error');
+                adminTab.value = 'categories';
+                return;
+            }
+            editingLink.value = false;
+            linkForm.value = {
+                id: null,
+                title: '',
+                url: '',
+                category: categories.value[0].name,
+                icon: 'fa-solid fa-shield-halved',
+                description: ''
+            };
+            showLinkModal.value = true;
+        };
+
+        const editLink = (link) => {
+            editingLink.value = true;
+            linkForm.value = { ...link };
+            showLinkModal.value = true;
+        };
+
+        const selectIcon = (iconClass) => {
+            linkForm.value.icon = iconClass;
+        };
+
+        const saveLink = async () => {
+            if (!dbRef) return;
+            if (!isSafeUrl(linkForm.value.url)) {
+                showNotification('URL ไม่ปลอดภัย! ต้องขึ้นต้นด้วย https:// หรือ http:// เท่านั้น', 'error');
+                return;
+            }
+            try {
+                let updatedLinks = [...links.value];
+                if (editingLink.value) {
+                    const idx = updatedLinks.findIndex(l => l.id === linkForm.value.id);
+                    if (idx !== -1) updatedLinks[idx] = { ...linkForm.value };
+                } else {
+                    const newId = updatedLinks.length > 0 ? Math.max(...updatedLinks.map(l => l.id)) + 1 : 1;
+                    updatedLinks.unshift({ ...linkForm.value, id: newId });
+                }
+                await dbRef.child('links').set(updatedLinks);
+                showNotification(editingLink.value ? `แก้ไขข้อมูล "${linkForm.value.title}" เรียบร้อยแล้ว` : `เพิ่มระบบงาน "${linkForm.value.title}" เรียบร้อยแล้ว`);
+                showLinkModal.value = false;
+            } catch (e) {
+                showNotification('บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ใน Security Rules', 'error');
+            }
+        };
+
+        const confirmDeleteLink = (link) => {
+            linkToDelete.value = link;
+            showDeleteModal.value = true;
+        };
+
+        const deleteLinkConfirmed = async () => {
+            if (!linkToDelete.value || !dbRef) return;
+            try {
+                const updatedLinks = links.value.filter(l => l.id !== linkToDelete.value.id);
+                await dbRef.child('links').set(updatedLinks);
+                showNotification(`ลบระบบงาน "${linkToDelete.value.title}" เรียบร้อยแล้ว`, 'info');
+            } catch (e) {
+                showNotification('ลบข้อมูลไม่สำเร็จ กรุณาตรวจสอบสิทธิ์', 'error');
+            }
+            linkToDelete.value = null;
+            showDeleteModal.value = false;
+        };
+
+        // --- CATEGORY MANAGEMENT METHODS ---
+        const saveCategory = async () => {
+            if (!dbRef) return;
+            const name = categoryInput.value.trim();
+            const icon = categoryIconInput.value || 'fa-solid fa-folder';
+            if (!name) return;
+
+            try {
+                let updatedCategories = [...categories.value];
+                let updatedLinks = [...links.value];
+
+                if (editingCategory.value) {
+                    const oldName = editingCategory.value.name;
+                    const idx = updatedCategories.findIndex(c => c.name === oldName);
+                    if (idx !== -1) {
+                        if (oldName !== name && updatedCategories.some(c => c.name === name)) {
+                            showNotification('ชื่อหมวดหมู่นี้มีอยู่ในระบบแล้ว!', 'error');
+                            return;
+                        }
+                        updatedCategories[idx] = { name, icon };
+                        updatedLinks = updatedLinks.map(link => link.category === oldName ? { ...link, category: name } : link);
+                        await dbRef.child('links').set(updatedLinks);
+                        showNotification(`อัปเดตหมวดหมู่ "${name}" เรียบร้อยแล้ว`);
+                    }
+                    editingCategory.value = null;
+                } else {
+                    if (updatedCategories.some(c => c.name === name)) {
+                        showNotification('หมวดหมู่นี้มีอยู่ในระบบแล้ว!', 'error');
+                        return;
+                    }
+                    updatedCategories.push({ name, icon });
+                    showNotification(`เพิ่มหมวดหมู่ใหม่ "${name}" เรียบร้อยแล้ว`);
+                }
+
+                await dbRef.child('categories').set(updatedCategories);
+                categoryInput.value = '';
+                categoryIconInput.value = 'fa-solid fa-folder';
+            } catch (e) {
+                showNotification('บันทึกหมวดหมู่ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์', 'error');
+            }
+        };
+
+        const startEditCategory = (catObj) => {
+            editingCategory.value = { ...catObj };
+            categoryInput.value = catObj.name;
+            categoryIconInput.value = catObj.icon || 'fa-solid fa-folder';
+        };
+
+        const cancelEditCategory = () => {
+            editingCategory.value = null;
+            categoryInput.value = '';
+            categoryIconInput.value = 'fa-solid fa-folder';
+        };
+
+        const deleteCategory = async (catName) => {
+            if (!dbRef) return;
+            const usedCount = links.value.filter(l => l.category === catName).length;
+            if (usedCount > 0 && categories.value.length <= 1) {
+                showNotification('ไม่สามารถลบหมวดหมู่สุดท้ายที่ยังมีระบบงานใช้งานอยู่ได้', 'error');
+                return;
+            }
+            try {
+                const updatedCategories = categories.value.filter(c => c.name !== catName);
+                await dbRef.child('categories').set(updatedCategories);
+
+                if (updatedCategories.length > 0) {
+                    const fallbackCat = updatedCategories[0].name;
+                    const updatedLinks = links.value.map(link => link.category === catName ? { ...link, category: fallbackCat } : link);
+                    await dbRef.child('links').set(updatedLinks);
+                }
+                showNotification(`ลบหมวดหมู่ "${catName}" เรียบร้อยแล้ว`, 'info');
+            } catch (e) {
+                showNotification('ลบหมวดหมู่ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์', 'error');
+            }
+        };
+
+        // --- ADMIN ROLE MANAGEMENT IN FIREBASE DB ---
+        const viewUserDetails = (user) => {
+            if (user.role === 'Super Admin' && currentUser.value?.role !== 'Super Admin') {
+                showNotification('ไม่มีสิทธิ์เข้าถึงข้อมูลของ Super Admin!', 'error');
+                return;
+            }
+            selectedUserDetail.value = { ...user };
+            showUserDetailModal.value = true;
+        };
+
+        const openEditUser = (user) => {
+            if (currentUser.value?.role !== 'Super Admin') {
+                showNotification('เฉพาะ Super Admin เท่านั้นที่แก้ไขสิทธิ์ได้!', 'error');
+                return;
+            }
+            editingUser.value = { ...user, newPassword: '' };
+            showEditUserPassword.value = false;
+            showUserEditModal.value = true;
+        };
+
+        const saveEditUser = async () => {
+            if (!editingUser.value || !dbRef) return;
+            try {
+                const updatePayload = {
+                    id: editingUser.value.id,
+                    username: editingUser.value.username.trim(),
+                    name: editingUser.value.name.trim(),
+                    role: editingUser.value.role
+                };
+                if (editingUser.value.newPassword && editingUser.value.newPassword.trim() !== '') {
+                    updatePayload.passwordHash = await hashPassword(editingUser.value.newPassword.trim());
+                    updatePayload.password = null;
+                }
+                await dbRef.child(`admins/${editingUser.value.id}`).update(updatePayload);
+                showNotification(`อัปเดตข้อมูลของ "${editingUser.value.name}" เรียบร้อยแล้ว`);
+                showUserEditModal.value = false;
+            } catch (e) {
+                showNotification('บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบ Security Rules', 'error');
+            }
+        };
+
+        const addAdminRole = async () => {
+            if (!dbRef || currentUser.value?.role !== 'Super Admin') return;
+            const username = userForm.value.username.trim();
+            const password = userForm.value.password;
+            if (!username || !password) return;
+
+            if (adminUsers.value.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                showNotification('Username นี้มีอยู่ในระบบแล้ว!', 'error');
+                return;
+            }
+
+            try {
+                const newRef = dbRef.child('admins').push();
+                const passwordHash = await hashPassword(password);
+                await newRef.set({
+                    id: newRef.key,
+                    username: username,
+                    name: userForm.value.name.trim(),
+                    role: userForm.value.role,
+                    passwordHash: passwordHash
+                });
+                userForm.value = { username: '', password: '', name: '', role: 'LP Admin' };
+                showNotification('เพิ่มผู้ดูแลระบบใหม่ลงใน Firebase เรียบร้อยแล้ว');
+            } catch (e) {
+                showNotification('เพิ่มผู้ดูแลระบบไม่สำเร็จ กรุณาตรวจสอบ Security Rules', 'error');
+            }
+        };
+
+        const deleteAdminRole = async (userId) => {
+            if (!dbRef || currentUser.value?.role !== 'Super Admin' || userId === currentUser.value?.id) return;
+            try {
+                await dbRef.child(`admins/${userId}`).remove();
+                showNotification('ลบผู้ดูแลระบบเรียบร้อยแล้ว', 'info');
+            } catch (e) {
+                showNotification('ลบผู้ดูแลระบบไม่สำเร็จ', 'error');
+            }
+        };
+
+        // --- COPY SECURITY RULES ---
+        const copySecurityRules = () => {
+            navigator.clipboard.writeText(recommendedSecurityRules);
+            showNotification('คัดลอก Firebase Security Rules เรียบร้อยแล้ว');
+        };
+
+        // --- JSON EXPORT / IMPORT ---
+        const exportDataJSON = () => {
+            const payload = {
+                links: links.value,
+                categories: categories.value,
+                announcement: announcementText.value
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "lp_safety_portal_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showNotification('ส่งออกไฟล์ JSON เรียบร้อยแล้ว');
+        };
+
+        const jsonFileInput = ref(null);
+        const triggerJSONImport = () => {
+            if (jsonFileInput.value) jsonFileInput.value.click();
+        };
+
+        const importDataJSON = (event) => {
+            const file = event.target.files[0];
+            if (!file || !dbRef) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && typeof imported === 'object') {
+                        if (Array.isArray(imported.links)) await dbRef.child('links').set(imported.links);
+                        if (Array.isArray(imported.categories)) await dbRef.child('categories').set(imported.categories);
+                        if (typeof imported.announcement === 'string') await dbRef.child('announcement').set(imported.announcement);
+                        showNotification('นำเข้าข้อมูลสำรองขึ้น Firebase เรียบร้อยแล้ว');
+                    } else {
+                        showNotification('รูปแบบไฟล์ JSON ไม่ถูกต้อง', 'error');
+                    }
+                } catch(err) {
+                    showNotification('เกิดข้อผิดพลาดในการนำเข้าไฟล์ JSON', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        return {
+            links,
+            adminUsers,
+            categories,
+            availableIcons,
+            recommendedSecurityRules,
+            searchQuery,
+            selectedCategory,
+            filteredLinks,
+            currentDate,
+            isFirebaseConfigured,
+            activeProjectId,
+            firebaseConfigText,
+            showInitialConfigForm,
+            isLoggedIn,
+            isLoggingIn,
+            currentUser,
+            showLoginPassword,
+            announcementText,
+            announcementInput,
+            isDbAuthenticated,
+            dbAuthForm,
+            showDbAuthPassword,
+            showLoginModal,
+            showAdminModal,
+            showLinkModal,
+            showDeleteModal,
+            adminTab,
+            loginForm,
+            userForm,
+            showNewUserPassword,
+            showEditUserPassword,
+            linkForm,
+            categoryInput,
+            categoryIconInput,
+            editingCategory,
+            showUserDetailModal,
+            selectedUserDetail,
+            showUserEditModal,
+            editingUser,
+            editingLink,
+            linkToDelete,
+            notification,
+            jsonFileInput,
+            showNotification,
+            isSafeUrl,
+            formatUrlDisplay,
+            applyFirebaseConfig,
+            openLoginModal,
+            handleLogin,
+            logout,
+            openAdminModal,
+            openDatabaseTab,
+            verifyDbSuperAdmin,
+            saveAnnouncement,
+            clearAnnouncement,
+            openAddLinkModal,
+            editLink,
+            selectIcon,
+            saveLink,
+            confirmDeleteLink,
+            deleteLinkConfirmed,
+            saveCategory,
+            startEditCategory,
+            cancelEditCategory,
+            deleteCategory,
+            viewUserDetails,
+            openEditUser,
+            saveEditUser,
+            addAdminRole,
+            deleteAdminRole,
+            copySecurityRules,
+            exportDataJSON,
+            triggerJSONImport,
+            importDataJSON
+        };
+    }
+}).mount('#app');
+</script>
+
+</body>
+</html>
